@@ -279,17 +279,20 @@
 		int start_pos = position;
 		int read_length = 0;
 		char current_char = '\0';
-		while( current_char != ' ' && current_char != 0 && read_length < 16 && position < [header length] ) {
+		do {
 			[header getBytes:&current_char range:NSMakeRange(position,1)];
 			position++;
 			read_length++;
-		}
-		if( read_length == 0 ){
+		} while( current_char != ' ' && current_char != 0 && read_length < 16 && position < [header length] );
+		if( current_char != ' ' ){
 			break;
 		}
 
 		// Grab the pair from the header.
-		int next_pair_size = (int)[XADTarParser readNumberInRangeFromBuffer:NSMakeRange(start_pos,read_length) buffer:header] - read_length;
+		int64_t next_pair_size = [XADTarParser readNumberInRangeFromBuffer:NSMakeRange(start_pos,read_length) buffer:header] - read_length;
+		if( next_pair_size < 2 || next_pair_size > (int64_t)([header length] - position) ){
+			break;
+		}
 		int next_pair_offset = position + next_pair_size;
 		char key_val_pair[next_pair_size];
 		memset( key_val_pair, '\0', next_pair_size );
